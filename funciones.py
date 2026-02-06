@@ -1,3 +1,26 @@
+import pandas as pd
+import numpy as np
+import os
+import cv2
+import matplotlib.pyplot as plt
+import seaborn as sns
+from glob import glob
+from tqdm import tqdm
+from skimage import color, filters, measure, morphology, transform
+from scipy import ndimage
+from scipy.stats import skew, kurtosis 
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, StratifiedKFold
+from sklearn.preprocessing import StandardScaler, LabelEncoder, label_binarize
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc, accuracy_score
+from itertools import cycle
+plt.style.use('ggplot')
+sns.set_style("whitegrid")
+SEED = 42
+np.random.seed(SEED)
 
 def segmentacion(img_rgb):
     """Método 1: Básico (Escala de grises + Otsu Global)"""
@@ -93,7 +116,7 @@ def variables(row):
     ])
 
 import sklearn.metrics as skm
-def resultados(model, X_set, y_true, name):
+def resultados(model, X_set, y_true, name,le):
     print(f"\nResultados: {name}")
     y_pred = model.predict(X_set)
     print(classification_report(y_true, y_pred, target_names=le.classes_))
@@ -103,7 +126,7 @@ def resultados(model, X_set, y_true, name):
                 xticklabels=le.classes_, yticklabels=le.classes_)
     plt.title(f'Matriz de Confusión - {name}')
     plt.show()
-def graficar_roc_seguro(model, X_val, label_name):
+def graficar_roc_seguro(model, X_val, label_name,n_classes,y_test_bin):
     try:
         if hasattr(model, "predict_proba"):
             y_prob = model.predict_proba(X_val)
@@ -126,7 +149,7 @@ def graficar_roc_seguro(model, X_val, label_name):
     auc_macro = skm.auc(all_fpr, mean_tpr)
     plt.plot(all_fpr, mean_tpr, label=f'{label_name} (Macro AUC={auc_macro:.2f})', lw=2)
 
-def roc_clase_seguro(model, X_set, y_test, model_name):
+def roc_clase_seguro(model, X_set, y_test, model_name,le):
     """
     Genera un gráfico ROC con una curva por cada clase para un modelo específico.
     Versión segura contra conflictos de nombres.
